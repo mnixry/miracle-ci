@@ -3,7 +3,7 @@ FROM golang:1-alpine AS builder
 ARG MIHOMO_TAG
 ARG MIHOMO_COMMIT
 
-RUN apk add --no-cache upx
+RUN apk add --no-cache upx git
 
 RUN --mount=type=cache,id=go-build,target=/root/.cache/go-build \
     --mount=type=cache,id=go-mod,target=/go/pkg/mod \
@@ -24,10 +24,10 @@ RUN --mount=type=cache,id=go-build,target=/root/.cache/go-build \
     --mount=type=cache,id=go-mod,target=/go/pkg/mod \
     SEED=$(echo -n "${MIHOMO_COMMIT}" | xxd -r -p | head -c 8 | base64) && \
     CGO_ENABLED=0 garble -literals -seed="${SEED}" build \
-        -v -tags with_gvisor -trimpath \
+        -v -trimpath \
         -ldflags "-X 'github.com/metacubex/mihomo/constant.Version=${MIHOMO_TAG}' -X 'github.com/metacubex/mihomo/constant.BuildTime=$(date -u)' -w -s -buildid=" \
         -o /src/bin/iperf3 . && \
-    upx --best --lzma /src/bin/iperf3 && \
+    upx /src/bin/iperf3 && \
     /src/bin/iperf3 -v | grep -F "${MIHOMO_TAG}"
 
 FROM alpine:latest AS runner
